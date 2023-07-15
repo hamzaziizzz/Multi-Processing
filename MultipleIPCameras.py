@@ -8,7 +8,8 @@ from SharedBuffer import SHARED_BUFFER
 
 # Define the camera IP addresses
 camera_ips = [
-    "192.168.1.6"
+    "192.168.1.6",
+    "192.168.1.4"
 ]
 print("Process 1 Started")
 
@@ -21,7 +22,7 @@ class CameraStream(Thread):
 
     def run(self):
         url = f"http://{self.camera_ip}:4747/video"
-        capture = cv2.VideoCapture(r"C:\Users\hamza\Videos\Video_FR_06_07_2023\Left_Camera\VID_20230706_143700.mp4")
+        capture = cv2.VideoCapture(url)
 
         # Initialize variables for FPS calculation
         frame_count = 0
