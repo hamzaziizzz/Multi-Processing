@@ -3,7 +3,11 @@ from threading import Thread
 
 # Define the camera IP addresses
 camera_ips = [
-    "http://192.168.17.158:4747/video"
+    "http://192.168.1.4:5000"
+    # "http://192.168.21.115:5000",
+    # "http://192.168.21.115:5010"
+    # "http://192.168.21.115:5020"
+    # "http://192.168.17.158:4747/video"
     # "http://192.168.18.197:4747/video",
     # "http://192.168.16.232:4747/video",
     # "http://192.168.3.223:4747/video",
@@ -11,7 +15,7 @@ camera_ips = [
     # "http://192.168.18.61:4747/video"
 ]
 
-MAXIMUM_SIZE = 256
+MAXIMUM_SIZE = 1024
 
 
 # Define a class to handle camera streaming in a separate thread
@@ -25,7 +29,7 @@ class CameraStream(Thread):
         # capture = cv2.VideoCapture(r"C:\Users\hamza\Videos\Video_FR_06_07_2023\Left_Camera\VID_20230706_143700.mp4")
         capture = cv2.VideoCapture(self.camera_ip)
 
-        # Initialize variables for FPS calculation
+        # # Initialize variables for FPS calculation
         # frame_count = 0
         # start_time = cv2.getTickCount()
 
@@ -37,8 +41,21 @@ class CameraStream(Thread):
             # Resize the frame
             frame = cv2.resize(frame, (1280, 768))
 
+            # # Reformat each frame as PNG file
+            # _, frame = cv2.imencode(".jpg", frame)
+            # frame = frame.tobytes()
+
             # Put some random text on the frame
-            frame = cv2.putText(frame, "Hamza Aziz", (70, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2, cv2.LINE_AA)
+            frame = cv2.putText(
+                img=frame,
+                text="Hamza Aziz",
+                org=(70, 70),
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                fontScale=0.7,
+                color=(0, 0, 255),
+                thickness=2,
+                lineType=cv2.LINE_AA
+            )
 
             # fact = 1
             # for i in range(1, 501):
@@ -50,18 +67,13 @@ class CameraStream(Thread):
             # # Calculate elapsed time
             # elapsed_time = (cv2.getTickCount() - start_time) / cv2.getTickFrequency()
             #
-            # # Check if one second has elapsed
-            # if elapsed_time >= 1.0:
-            #     # Calculate FPS
-            #     # fps = f"FPS: {(frame_count / elapsed_time):.2f}"
-            #     # print(fps)
-            #     # Reset variables for the next calculation
-            #     frame_count = 0
-            #     start_time = cv2.getTickCount()
+            # # Calculate FPS
+            # fps = f"FPS: {(1 / elapsed_time):.2f}"
+            # print(fps)
 
             # Process the frame as needed (e.g. display, save, etc.)
             if self.shared_buffer.qsize() < MAXIMUM_SIZE:
-                print(f"Current Queue Size: {self.shared_buffer.qsize()}")
+                # print(f"Current Queue Size: {self.shared_buffer.qsize()}")
                 self.shared_buffer.put(frame)
             else:
                 while not self.shared_buffer.empty():
@@ -72,8 +84,11 @@ class CameraStream(Thread):
             if cv2.waitKey(1) == ord('q'):
                 break
 
+            # start_time = cv2.getTickCount()
+
         # Release the video capture and signal the end of frames
         capture.release()
+        self.shared_buffer.put(None)
 
 
 def create_thread(shared_buffer):
