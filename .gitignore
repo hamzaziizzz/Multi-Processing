@@ -362,3 +362,6 @@ cython_debug/
 
 # Extra Files
 README.pdf
+
+# Visual Studio Code
+.vscode/
