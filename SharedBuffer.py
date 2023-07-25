@@ -1,3 +1,5 @@
-from multiprocessing import Queue
+import multiprocessing
+import queue
 
-SHARED_BUFFER = Queue()
+MULTIPROCESS_SHARED_BUFFER = multiprocessing.Queue()
+MULTITHREAD_SHARED_BUFFER = queue.Queue()

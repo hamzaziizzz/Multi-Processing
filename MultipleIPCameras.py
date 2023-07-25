@@ -3,8 +3,8 @@ from threading import Thread
 
 # Define the camera IP addresses
 camera_ips = [
-    "http://192.168.1.4:5000"
-    # "http://192.168.21.115:5000",
+    # "http://192.168.1.4:5000"
+    "http://192.168.21.115:5000",
     # "http://192.168.21.115:5010"
     # "http://192.168.21.115:5020"
     # "http://192.168.17.158:4747/video"
