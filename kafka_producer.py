@@ -1,27 +1,29 @@
-"""
-Reference for Multi-Processing Locking:
-https://stackoverflow.com/questions/57095895/how-to-use-multiprocessing-queue-with-lock
-"""
-import queue
-import multiprocessing
-import threading
-
+from confluent_kafka import Producer
 import cv2
 import time
+import threading
 
-from custom_logging import logger
 from parameters import IP_CAMERAS, FRAME_WIDTH, FRAME_HEIGHT, IP_CAM_REINIT_WAIT_DURATION
 from utils import roi_face_detection, create_mask
-from locks import lock
+from custom_logging import logger
+
+# Kafka configuration
+kafka_conf = {
+    'bootstrap.servers': 'localhost:9092',  # Replace with your Kafka broker address
+}
+
+# Kafka topic for frames
+kafka_topic_prefix = 'camera_frames_'
+
+# Create Kafka producer
+producer = Producer(kafka_conf)
 
 
-# Define a class to handle camera streaming in a separate thread
 class CameraStream:
-    def __init__(self, camera_name: str, camera_ip: str, shared_buffer):
+    def __init__(self, camera_name: str, camera_ip: str):
         self.frame = None
         self.camera_name = camera_name
         self.camera_ip = camera_ip
-        self.shared_buffer = shared_buffer
         self.stream = cv2.VideoCapture(self.camera_ip)
         self.grabbed, _ = self.stream.read()
         self.initialized = self.grabbed
@@ -47,11 +49,7 @@ class CameraStream:
         """Releases the camera stream"""
         self.stream.release()
 
-    def place_frame_in_buffer(self):
-        """
-        Places the frame in the shared buffer
-        :return:
-        """
+    def place_frame_in_kafka(self):
         if self.process_this_frame:
             self._read_frame()
             if not self.grabbed:
@@ -78,11 +76,14 @@ class CameraStream:
                 # Apply mask to the frame
                 self.frame = self.frame * mask
 
-                if isinstance(self.shared_buffer, queue.Queue):
-                    with lock:
-                        self.shared_buffer.put(self.frame)
-                elif isinstance(self.shared_buffer, multiprocessing.queues.Queue):
-                    self.shared_buffer.put(self.frame)
+                # Convert the frame to bytes
+                _, frame_data = cv2.imencode(".jpg", self.frame)
+                frame_data = frame_data.tobytes()
+
+                # Send the frame to Kafka
+                topic = kafka_topic_prefix + self.camera_name
+                producer.produce(topic, value=frame_data)
+                producer.flush()
         else:
             self._discard_frame()
 
@@ -90,29 +91,31 @@ class CameraStream:
         self.process_this_frame = not self.process_this_frame
 
 
-def create_camera(name, ip, buffer):
-    camera = CameraStream(camera_name=name, camera_ip=ip, shared_buffer=buffer)
+def create_camera(name, ip):
+    camera = CameraStream(camera_name=name, camera_ip=ip)
 
     while True:
         if camera.initialized:
             try:
-                camera.place_frame_in_buffer()
+                camera.place_frame_in_kafka()
             except Exception as exception:
-                logger.error(f"Exception raised while placing the frame in the buffer from {camera.camera_name} (url: {camera.camera_ip})). Releasing the stream...")
+                logger.error(
+                    f"Exception raised while placing the frame in the buffer from {camera.camera_name} (url: {camera.camera_ip})). Releasing the stream...")
                 camera.stream.release()
                 camera.is_initialized = False
         else:
-            logger.error(f"Camera stream from {camera.camera_name} (url: {camera.camera_ip})) is not accessible. Destroying the camera object...")
+            logger.error(
+                f"Camera stream from {camera.camera_name} (url: {camera.camera_ip})) is not accessible. Destroying the camera object...")
             del camera
-            logger.info(f"Putting the thread to sleep for {name} (url: {ip})) for {IP_CAM_REINIT_WAIT_DURATION} seconds...")
+            logger.info(
+                f"Putting the thread to sleep for {name} (url: {ip})) for {IP_CAM_REINIT_WAIT_DURATION} seconds...")
             time.sleep(IP_CAM_REINIT_WAIT_DURATION)
             logger.info(f'Creating a new camera object for {name} (url: {ip}))...')
-            camera = CameraStream(camera_name=name, camera_ip=ip, shared_buffer=buffer)
+            camera = CameraStream(camera_name=name, camera_ip=ip)
 
-
-def main(shared_buffer):
+def main():
     print("Process 1 Started")
     for camera_name in IP_CAMERAS:
         camera_ip = IP_CAMERAS[camera_name][0]
-        camera_thread = threading.Thread(target=create_camera, args=(camera_name, camera_ip, shared_buffer))
+        camera_thread = threading.Thread(target=create_camera, args=(camera_name, camera_ip))
         camera_thread.start()

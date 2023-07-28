@@ -2,7 +2,6 @@ import cv2
 
 
 def read_frames(shared_buffer):
-    print("Process 2 Started")
     # # Initialize variables for FPS calculation
     # start_time = cv2.getTickCount()
     
@@ -37,4 +36,8 @@ def read_frames(shared_buffer):
     
     # Destroy all windows when done
     cv2.destroyAllWindows()
-    # pass
+
+
+def main(shared_buffer):
+    print("Process 2 Started")
+    read_frames(shared_buffer)

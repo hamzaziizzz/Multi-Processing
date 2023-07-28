@@ -1,7 +1,7 @@
 import threading
 import time
-from producer import main as producer_main
-from consumer import main as consumer_main
+from kafka_producer import main as producer_main
+from kafka_consumer import main as consumer_main
 
 if __name__ == "__main__":
     start_time = time.time()

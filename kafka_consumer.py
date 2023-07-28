@@ -49,7 +49,3 @@ def read_frames():
 
 def main():
     read_frames()
-
-
-if __name__ == "__main__":
-    main()
