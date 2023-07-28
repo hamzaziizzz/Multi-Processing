@@ -1,9 +1,8 @@
 from confluent_kafka import Producer
 import cv2
-import time
 import threading
 
-from parameters import IP_CAMERAS, FRAME_WIDTH, FRAME_HEIGHT, IP_CAM_REINIT_WAIT_DURATION
+from parameters import IP_CAMERAS, FRAME_WIDTH, FRAME_HEIGHT
 from utils import roi_face_detection, create_mask
 from custom_logging import logger
 
