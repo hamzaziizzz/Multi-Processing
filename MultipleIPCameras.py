@@ -104,10 +104,11 @@ def create_camera(name, ip, buffer):
         else:
             logger.error(f"Camera stream from {camera.camera_name} (url: {camera.camera_ip})) is not accessible. Destroying the camera object...")
             del camera
-            logger.info(f"Putting the thread to sleep for {name} (url: {ip})) for {IP_CAM_REINIT_WAIT_DURATION} seconds...")
-            time.sleep(IP_CAM_REINIT_WAIT_DURATION)
-            logger.info(f'Creating a new camera object for {name} (url: {ip}))...')
-            camera = CameraStream(camera_name=name, camera_ip=ip, shared_buffer=buffer)
+            buffer.put(None)
+            # logger.info(f"Putting the thread to sleep for {name} (url: {ip})) for {IP_CAM_REINIT_WAIT_DURATION} seconds...")
+            # time.sleep(IP_CAM_REINIT_WAIT_DURATION)
+            # logger.info(f'Creating a new camera object for {name} (url: {ip}))...')
+            # camera = CameraStream(camera_name=name, camera_ip=ip, shared_buffer=buffer)
 
 
 def main(shared_buffer):

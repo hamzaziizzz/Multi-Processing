@@ -1,16 +1,16 @@
 import threading
 import time
 
-from MultipleIPCameras import create_thread
-from LiveStreaming import read_frames
+from MultipleIPCameras import main as producer_main
+from LiveStreaming import main as consumer_main
 from SharedBuffer import MULTITHREAD_SHARED_BUFFER
 
 
 if __name__ == "__main__":
     start_time = time.time()
 
-    producer_thread = threading.Thread(target=create_thread, args=(MULTITHREAD_SHARED_BUFFER, ))
-    consumer_thread = threading.Thread(target=read_frames, args=(MULTITHREAD_SHARED_BUFFER, ))
+    producer_thread = threading.Thread(target=producer_main, args=(MULTITHREAD_SHARED_BUFFER, ))
+    consumer_thread = threading.Thread(target=consumer_main, args=(MULTITHREAD_SHARED_BUFFER, ))
 
     # Start the processes
     producer_thread.start()

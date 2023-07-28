@@ -58,6 +58,7 @@ class CameraStream:
                     f'Could not read a frame from the camera stream from {self.camera_name} (url: {self.camera_ip})). Releasing the stream...')
                 self.release()
                 self.initialized = False
+                frame_data = None
             else:
                 # Resize the frame if the frame size is larger than the frame size specified in parameters.py
                 self.frame = cv2.resize(self.frame, (FRAME_WIDTH, FRAME_HEIGHT))
@@ -80,10 +81,10 @@ class CameraStream:
                 _, frame_data = cv2.imencode(".jpg", self.frame)
                 frame_data = frame_data.tobytes()
 
-                # Send the frame to Kafka
-                topic = kafka_topic_prefix + self.camera_name
-                producer.produce(topic, value=frame_data)
-                producer.flush()
+            # Send the frame to Kafka
+            topic = kafka_topic_prefix + self.camera_name
+            producer.produce(topic, value=frame_data)
+            producer.flush()
         else:
             self._discard_frame()
 
@@ -107,11 +108,12 @@ def create_camera(name, ip):
             logger.error(
                 f"Camera stream from {camera.camera_name} (url: {camera.camera_ip})) is not accessible. Destroying the camera object...")
             del camera
-            logger.info(
-                f"Putting the thread to sleep for {name} (url: {ip})) for {IP_CAM_REINIT_WAIT_DURATION} seconds...")
-            time.sleep(IP_CAM_REINIT_WAIT_DURATION)
-            logger.info(f'Creating a new camera object for {name} (url: {ip}))...')
-            camera = CameraStream(camera_name=name, camera_ip=ip)
+            # logger.info(
+            #     f"Putting the thread to sleep for {name} (url: {ip})) for {IP_CAM_REINIT_WAIT_DURATION} seconds...")
+            # time.sleep(IP_CAM_REINIT_WAIT_DURATION)
+            # logger.info(f'Creating a new camera object for {name} (url: {ip}))...')
+            # camera = CameraStream(camera_name=name, camera_ip=ip)
+
 
 def main():
     print("Process 1 Started")
